@@ -13,24 +13,22 @@ const io = new Server(httpServer, {
 });
 
 io.on("connection", (socket) => {
-  socket.on("enter room", (userName) => {
+  socket.once("enter room", (userName) => {
     socket.join("room1");
+
     console.log(`${userName} 님이 입장하셨습니다.`);
-
     io.to("room1").emit("notice enter", `${userName} 님이 입장하셨습니다.`);
-  });
 
-  socket.on("leave room", (userName) => {
-    console.log(`${userName} 님이 나가셨습니다.`);
+    socket.on("new message", ({ userName, message }) =>
+      io
+        .to("room1")
+        .emit("new message", { userName: userName, message: message })
+    );
 
-    io.to("room1").emit("notice leave", `${userName} 님이 나가셨습니다.`);
-
-    socket.leave("room1");
-  });
-
-  socket.on("new message", (message) => {
-    console.log(message);
-    io.to("room1").emit("new message", message);
+    socket.on("disconnect", () => {
+      console.log(`${userName} 님이 나가셨습니다.`);
+      io.to("room1").emit("notice leave", `${userName} 님이 나가셨습니다.`);
+    });
   });
 });
 
